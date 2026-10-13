@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Return Book</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Return Book</h1>
+      <div id="issue-list" class="card-list"></div>
+      <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="books.html">View Books</a>
+        <a href="add-book.html">Add Book</a>
+        <a href="issue-book.html">Issue Book</a>
+      </div>
+    </div>
+    <script>
+      async function loadIssues() {
+        const response = await fetch("/issue");
+        const issues = await response.json();
+        const list = document.getElementById("issue-list");
+        list.innerHTML = issues.length
+          ? issues
+              .map(
+                (issue) => `
+        <div class="card issue-card ${issue.status === "Returned" ? "returned" : ""}">
+          <h2>${issue.bookTitle}</h2>
+          <p><strong>Student:</strong> ${issue.studentName} (${issue.studentId})</p>
+          <p><strong>Issue Date:</strong> ${issue.issueDate}</p>
+          <p><strong>Status:</strong> ${issue.status}</p>
+          ${issue.status === "Issued" ? `<button onclick="returnBook('${issue._id}')">Return Book</button>` : ""}
+        </div>
+      `,
+              )
+              .join("")
+          : '<p class="empty">No issued books found.</p>';
+      }
+
+      async function returnBook(id) {
+        if (!confirm("Mark this book as returned?")) return;
+        await fetch(`/return/${id}`, { method: "PUT" });
+        loadIssues();
+      }
+
+      loadIssues();
+    </script>
+  </body>
+</html>

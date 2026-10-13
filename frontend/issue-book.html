@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Issue Book</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Issue Book</h1>
+      <form id="issue-form" class="form-card">
+        <label
+          >Student Name<input type="text" id="studentName" required
+        /></label>
+        <label>Student ID<input type="text" id="studentId" required /></label>
+        <label>Book Title<select id="bookTitle" required></select></label>
+        <label>Issue Date<input type="date" id="issueDate" required /></label>
+        <button type="submit">Issue</button>
+      </form>
+      <div id="message" class="message"></div>
+      <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="books.html">View Books</a>
+        <a href="add-book.html">Add Book</a>
+        <a href="return-book.html">Return Book</a>
+      </div>
+    </div>
+    <script>
+      async function loadAvailableBooks() {
+        const response = await fetch("/books");
+        const books = await response.json();
+        const select = document.getElementById("bookTitle");
+        const options = books
+          .filter((book) => book.available > 0)
+          .map(
+            (book) =>
+              `<option value="${book.title}">${book.title} (${book.available} available)</option>`,
+          );
+        select.innerHTML = options.length
+          ? options.join("")
+          : '<option value="">No available books</option>';
+      }
+
+      document
+        .getElementById("issue-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const record = {
+            studentName: document.getElementById("studentName").value.trim(),
+            studentId: document.getElementById("studentId").value.trim(),
+            bookTitle: document.getElementById("bookTitle").value,
+            issueDate: document.getElementById("issueDate").value,
+          };
+
+          const response = await fetch("/issue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(record),
+          });
+          const data = await response.json();
+          if (!response.ok)
+            return showMessage(
+              data.message || "Unable to issue book.",
+              "error",
+            );
+
+          showMessage("Book issued successfully!", "success");
+          document.getElementById("issue-form").reset();
+          loadAvailableBooks();
+        });
+
+      function showMessage(text, type) {
+        const el = document.getElementById("message");
+        el.textContent = text;
+        el.className = `message ${type}`;
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById("issueDate").value = today;
+      loadAvailableBooks();
+    </script>
+  </body>
+</html>

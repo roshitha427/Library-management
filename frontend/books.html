@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Books</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <div class="page-title">
+          <h1>Books</h1>
+          <p class="page-subtitle">
+            Browse the library inventory and explore a curated gallery of 100
+            well-known books with recognizable cover artwork.
+          </p>
+        </div>
+        <div class="nav-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="add-book.html">Add Book</a>
+          <a href="issue-book.html">Issue Book</a>
+          <a href="return-book.html">Return Book</a>
+        </div>
+      </div>
+
+      <section class="sample-section">
+        <div class="section-heading">
+          <h2>Recognizable Book Gallery</h2>
+          <p>
+            Classic novels, modern bestsellers, and popular titles with cover
+            images to help librarians identify books instantly.
+          </p>
+        </div>
+        <div id="sample-book-list" class="sample-grid"></div>
+      </section>
+
+      <div class="toolbar">
+        <input
+          type="search"
+          id="search"
+          placeholder="Search books by title, author, category"
+        />
+        <button id="refresh">Refresh</button>
+      </div>
+      <div id="book-list" class="card-list"></div>
+    </div>
+
+    <script type="module">
+      import { sampleBooks } from "./books-data.js";
+
+      const sampleList = document.getElementById("sample-book-list");
+      const list = document.getElementById("book-list");
+      const searchInput = document.getElementById("search");
+
+      function renderSampleBooks() {
+        sampleList.innerHTML = sampleBooks
+          .map(
+            (book) => `
+            <article class="sample-card">
+              <figure>
+                <img src="${book.coverImage}" alt="${book.title} cover" loading="lazy" />
+              </figure>
+              <div class="sample-meta">
+                <h2>${book.title}</h2>
+                <p>${book.author}</p>
+                <span class="badge">${book.category}</span>
+              </div>
+            </article>
+          `,
+          )
+          .join("");
+      }
+
+      async function loadBooks(query = "") {
+        const response = await fetch(
+          `/books${query ? "?search=" + encodeURIComponent(query) : ""}`,
+        );
+        const books = await response.json();
+
+        list.innerHTML = books.length
+          ? books
+              .map(
+                (book) => `
+            <article class="card book-card">
+              <div class="book-cover-frame">
+                <img class="book-cover" src="${book.coverImage || "https://via.placeholder.com/120x170?text=Book"}" alt="${book.title} cover" loading="lazy" />
+              </div>
+              <div class="book-card-content">
+                <h2>${book.title}</h2>
+                <p><strong>Author:</strong> ${book.author}</p>
+                <p><strong>Category:</strong> ${book.category}</p>
+                <p><strong>Available:</strong> ${book.available}</p>
+                <div class="card-actions">
+                  <button onclick="editBook('${book._id}')">Edit</button>
+                  <button onclick="deleteBook('${book._id}')" class="danger">Delete</button>
+                </div>
+              </div>
+            </article>
+          `,
+              )
+              .join("")
+          : '<p class="empty">No books found.</p>';
+      }
+
+      function editBook(id) {
+        window.location.href = `add-book.html?edit=${id}`;
+      }
+
+      async function deleteBook(id) {
+        if (!confirm("Delete this book?")) return;
+        await fetch(`/books/${id}`, { method: "DELETE" });
+        loadBooks(searchInput.value.trim());
+      }
+
+      document
+        .getElementById("refresh")
+        .addEventListener("click", () => loadBooks(searchInput.value.trim()));
+      searchInput.addEventListener("input", () =>
+        loadBooks(searchInput.value.trim()),
+      );
+
+      renderSampleBooks();
+      loadBooks();
+    </script>
+  </body>
+</html>

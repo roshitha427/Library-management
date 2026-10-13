@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Library Dashboard</h1>
+      <div class="cards" id="dashboard-cards"></div>
+      <div class="nav-links">
+        <a href="add-book.html">Add Book</a>
+        <a href="books.html">View Books</a>
+        <a href="issue-book.html">Issue Book</a>
+        <a href="return-book.html">Return Book</a>
+      </div>
+    </div>
+    <script>
+      async function loadDashboard() {
+        const response = await fetch("/dashboard");
+        const data = await response.json();
+
+        const cards = [
+          { label: "Total Books", value: data.totalBooks },
+          { label: "Available Books", value: data.availableBooks },
+          { label: "Issued Books", value: data.issuedBooks },
+          { label: "Returned Today", value: data.returnedToday },
+          { label: "Total Students", value: data.totalStudents },
+        ];
+
+        const container = document.getElementById("dashboard-cards");
+        container.innerHTML = cards
+          .map(
+            (card) => `
+        <div class="card">
+          <h2>${card.value}</h2>
+          <p>${card.label}</p>
+        </div>
+      `,
+          )
+          .join("");
+      }
+
+      loadDashboard();
+    </script>
+  </body>
+</html>
